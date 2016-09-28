@@ -1,8 +1,10 @@
 package ConcreteImpl;
 
+import Utils.Util;
 import container.MessageEnvelope;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
@@ -56,6 +58,7 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
 
     @Override
     public boolean offer(MessageEnvelope messageEnvelope) {
+
         return false;
     }
 
@@ -89,6 +92,7 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
         lock.lockInterruptibly();
         try {
             while (count >= capcity) {
+                System.out.println("Msg的put操作被阻塞...");
                 notFull.await();
             }
             enqueue(messageEnvelope);
@@ -109,6 +113,9 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
 
     @Override
     public boolean offer(MessageEnvelope messageEnvelope, long timeout, TimeUnit unit) throws InterruptedException {
+        //todo 实现一个延迟add的效果
+        if (!Util.checkoutNotNull(messageEnvelope)) return false;
+
         return false;
     }
 
@@ -118,6 +125,7 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
         lock.lockInterruptibly();//阻塞 取元素
         try {
             while (count == 0) {
+                System.out.println("取Msg被阻塞住了");
                 notEmpty.await();
             }
             return dequeue();
@@ -129,11 +137,60 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
     //阻塞取元素
     private MessageEnvelope dequeue() {
 //        final MessageEnvelope[] copy = this.array;//为何要操作副本呢?
-        MessageEnvelope msg = array[count - 1];
-        array[count - 1] = null;//置空
+        MessageEnvelope msg = null;
+        for (int i = 0; i < capcity; i++) {
+            if (array[i] != null) {
+                //pop the head of queue
+                msg = array[i];
+                array[i] = null;//置空
+                break;
+            }
+        }
         count--;
         notFull.signal();
         return msg;
+    }
+
+    //快速在原来的array基础上调整元素,空出位置给后来的元素
+    public boolean adjustElements() {
+        if (count >= capcity) {
+            return false;
+        }
+        //浪费了空间 尝试不额外的添加内存
+        MessageEnvelope[] copy = new MessageEnvelope[capcity];
+        int pointer = 0;
+        for (MessageEnvelope msg : array) {
+            if (msg != null) {
+                copy[pointer] = msg;
+                ++pointer;
+            }
+        }
+
+        if (pointer == count) {
+            return true;
+        }//检测一下是否调整完全
+        return false;
+    }
+
+    //压缩array
+    public boolean adjustElement(MessageEnvelope[] array) {
+        if (count >= capcity) {
+            return false;
+        }
+        System.out.println("Before:" + Arrays.toString(array));
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == null) {
+                for (int j = i + 1; j < array.length; j++) {
+                    if (array[j] != null) {
+                        array[i] = array[j];
+                        array[j] = null;
+                        break;
+                    }
+                }
+            }
+        }
+        System.out.println("After:" + Arrays.toString(array));
+        return true;
     }
 
     @Override
@@ -143,12 +200,18 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
 
     @Override
     public int remainingCapacity() {
-        return 0;
+        return capcity - count;
     }
 
     @Override
     public boolean remove(Object o) {
-        return false;
+        int index = indexOf(o);
+        if (index == -1) {
+            return false;
+        }
+        array[index] = null;
+        count--;
+        return true;
     }
 
     @Override
@@ -188,7 +251,25 @@ public class MyBlockingQueue implements BlockingQueue<MessageEnvelope>, Serializ
 
     @Override
     public boolean contains(Object o) {
+        MessageEnvelope msg = (MessageEnvelope) o;
+        for (MessageEnvelope temp : array) {
+            if (temp == msg) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    private int indexOf(Object o) {
+        if (!contains(o)) {
+            return -1;
+        }
+        for (int i = 0; i < capcity; i++) {
+            if (array[i] == o) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override

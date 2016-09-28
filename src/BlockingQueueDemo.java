@@ -11,6 +11,7 @@ public class BlockingQueueDemo {
 
         //todo 模拟一个多线程写入msg
         PutRunnable runnable = new PutRunnable(queue, 2, "Aaron");
+//        for (int i = 0; i < 30; i++) {//模拟put阻塞操作
         for (int i = 0; i < 3; i++) {
             Thread thread = new Thread(runnable, i + "");//id属性
             thread.start();
@@ -18,10 +19,19 @@ public class BlockingQueueDemo {
 
         //todo 模拟多线程读出msg
         GetRunnable getRunnable = new GetRunnable(queue);
+//        for (int i = 0; i < 4; i++) {//模拟阻塞读取
         for (int i = 0; i < 3; i++) {
             Thread thread = new Thread(getRunnable, i + "");//id属性
             thread.start();
         }
+
+        //test adjustElement()
+        MessageEnvelope[] array = new MessageEnvelope[10];
+        array[3] = new MessageEnvelope(3, "Ar");
+        array[4] = new MessageEnvelope(4, "ron");
+        array[6] = new MessageEnvelope(6, "haha");
+        array[8] = new MessageEnvelope(8, "e");
+        queue.adjustElement(array);
     }
 
     static class GetRunnable implements Runnable {

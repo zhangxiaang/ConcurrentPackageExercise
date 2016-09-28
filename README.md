@@ -9,3 +9,5 @@
 
 * BlockingQueue:首先实现了这个接口的队列都是线程安全的,多线程的enqueue/dequeue都是
 没有问题的;
+    * 最重要的就是掌握ReentriantLock的lock()和lockInterruptibly()的区别:前者遇到
+    条件不满足的话直接
