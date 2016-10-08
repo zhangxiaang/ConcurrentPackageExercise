@@ -49,6 +49,7 @@ public class BlockingQueueDemo {
                     System.out.println("取出的信封的信息为:" + msg.toString());
                 }
             } catch (InterruptedException e) {
+//                e.addSuppressed(e);//addSuppressed()是干嘛的?
                 e.printStackTrace();
             }
 
