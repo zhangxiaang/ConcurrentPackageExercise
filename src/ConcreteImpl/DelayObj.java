@@ -28,8 +28,9 @@ public class DelayObj implements Delayed {
 
     @Override
     public long getDelay(TimeUnit unit) {
+        //什么是diff?
         diff = expiryTime - System.currentTimeMillis();
-        return unit.convert(diff, TimeUnit.MILLISECONDS);
+        return unit.convert(diff, TimeUnit.NANOSECONDS);
     }
 
     @Override

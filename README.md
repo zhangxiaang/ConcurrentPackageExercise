@@ -11,3 +11,11 @@
 没有问题的;
     * 最重要的就是掌握ReentriantLock的lock()和lockInterruptibly()的区别:前者遇到
     条件不满足的话直接
+    
+* DelayQueue: 取出一个元素就使线程进入死循环中，如果条件(notEmpty+timeOut)不满足
+就释放刚刚持有的headElement引用,如果head元素的delay值小于等于0就直接poll出来返回给调用
+者,否则的话就生成一个leader线程,在等待了delay时长后直接取出来返回即可.
+* 有个问题:为什么我put的顺序是按照delay值从长到短压入队列的但是在take操作的时候反而queue
+已经是按照delay值从小到大的顺序拍好了的呢? 这个queue是一个priorityQueue,在压入队列的时候
+已经根据delay拍好正确的顺序了。原因是啥呢?－－> delayObj实现了Delayed的compareTo函数，就是根据
+expiryTime拍好顺序的。
